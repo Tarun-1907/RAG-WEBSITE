@@ -1,4 +1,4 @@
-# app.py - Enhanced with CodeToLive Styling
+# app.py - Fixed Dark Mode with CodeToLive Styling
 import streamlit as st
 import os
 import sys
@@ -64,12 +64,20 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS matching CodeToLive style
-st.markdown("""
-<style>
+# Define CSS for both light and dark modes
+def get_css():
+    return """
+    <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
     
-    /* Main Theme Colors - Matching CodeToLive */
+    /* Common Styles */
+    .stApp {
+        max-width: 1400px;
+        margin: 0 auto;
+        font-family: 'Poppins', sans-serif;
+    }
+    
+    /* Light Mode Variables */
     :root {
         --primary-color: #1abc9c;
         --primary-dark: #16a085;
@@ -77,17 +85,37 @@ st.markdown("""
         --accent-color: #e74c3c;
         --dark-color: #2c3e50;
         --light-color: #f4f7f6;
+        --bg-color: #ffffff;
+        --card-bg: #ffffff;
         --border-color: #e0e0e0;
+        --text-color: #333333;
+        --text-light: #666666;
         --shadow-light: 0 5px 15px rgba(0, 0, 0, 0.05);
         --shadow-medium: 0 10px 25px rgba(0, 0, 0, 0.1);
         --radius: 10px;
     }
     
+    /* Dark Mode Variables */
+    .dark-mode {
+        --primary-color: #1abc9c;
+        --primary-dark: #16a085;
+        --secondary-color: #3498db;
+        --accent-color: #e74c3c;
+        --dark-color: #ffffff;
+        --light-color: #121212;
+        --bg-color: #121212;
+        --card-bg: #1e1e1e;
+        --border-color: #333333;
+        --text-color: #ffffff;
+        --text-light: #cccccc;
+        --shadow-light: 0 5px 15px rgba(0, 0, 0, 0.2);
+        --shadow-medium: 0 10px 25px rgba(0, 0, 0, 0.3);
+    }
+    
+    /* Apply theme variables */
     .stApp {
-        max-width: 1400px;
-        margin: 0 auto;
-        font-family: 'Poppins', sans-serif;
-        background: #f8f9fa;
+        background-color: var(--bg-color);
+        color: var(--text-color);
     }
     
     /* Header Styling */
@@ -95,7 +123,7 @@ st.markdown("""
         background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
         color: white;
         padding: 20px;
-        border-radius: 10px;
+        border-radius: var(--radius);
         margin-bottom: 30px;
         box-shadow: var(--shadow-medium);
         text-align: center;
@@ -116,13 +144,14 @@ st.markdown("""
     
     /* Card Styling */
     .card {
-        background: white;
+        background-color: var(--card-bg);
         border-radius: var(--radius);
         padding: 25px;
         box-shadow: var(--shadow-light);
-        border: none;
+        border: 1px solid var(--border-color);
         margin-bottom: 20px;
         transition: all 0.3s ease;
+        color: var(--text-color);
     }
     
     .card:hover {
@@ -135,7 +164,7 @@ st.markdown("""
         border-bottom: 2px solid var(--primary-color);
         padding-bottom: 15px;
         margin-bottom: 20px;
-        color: var(--dark-color);
+        color: var(--text-color);
         font-weight: 600;
         font-size: 1.3rem;
     }
@@ -150,6 +179,7 @@ st.markdown("""
         margin: 20px 0;
         transition: all 0.3s ease;
         cursor: pointer;
+        color: var(--text-color);
     }
     
     .upload-area:hover {
@@ -178,18 +208,18 @@ st.markdown("""
     }
     
     .assistant-msg {
-        background: white;
-        color: var(--dark-color);
+        background-color: var(--card-bg);
+        color: var(--text-color);
         padding: 15px 20px;
         border-radius: 18px 18px 18px 4px;
         margin: 12px 0;
         max-width: 70%;
         margin-right: auto;
-        border: 2px solid var(--border-color);
+        border: 1px solid var(--border-color);
         box-shadow: var(--shadow-light);
     }
     
-    /* Buttons */
+    /* Buttons - Override Streamlit's default */
     .stButton > button {
         background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
         color: white;
@@ -204,29 +234,20 @@ st.markdown("""
     .stButton > button:hover {
         transform: translateY(-2px);
         box-shadow: 0 5px 15px rgba(26, 188, 156, 0.3);
-    }
-    
-    /* Secondary Button */
-    .secondary-btn {
-        background: transparent !important;
-        color: var(--primary-color) !important;
-        border: 2px solid var(--primary-color) !important;
-    }
-    
-    .secondary-btn:hover {
-        background: var(--primary-color) !important;
-        color: white !important;
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+        color: white;
     }
     
     /* File Cards */
     .file-card {
-        background: white;
+        background-color: var(--card-bg);
         padding: 20px;
         border-radius: var(--radius);
         margin: 15px 0;
         border-left: 5px solid var(--primary-color);
         box-shadow: var(--shadow-light);
         transition: all 0.3s ease;
+        color: var(--text-color);
     }
     
     .file-card:hover {
@@ -264,43 +285,34 @@ st.markdown("""
         font-weight: 500;
     }
     
-    /* Quick Action Buttons */
-    .quick-action-btn {
-        background: white !important;
-        color: var(--dark-color) !important;
-        border: 2px solid var(--border-color) !important;
-        padding: 12px !important;
-        margin: 5px 0 !important;
-        border-radius: 8px !important;
-        text-align: center !important;
-        width: 100% !important;
+    /* Dark Mode specific status boxes */
+    .dark-mode .success-box {
+        background: linear-gradient(135deg, #1e4620, #2d5a2f);
+        color: #c8e6c9;
+        border-color: #2d5a2f;
     }
     
-    .quick-action-btn:hover {
-        border-color: var(--primary-color) !important;
-        color: var(--primary-color) !important;
-        transform: translateY(-2px) !important;
+    .dark-mode .info-box {
+        background: linear-gradient(135deg, #1a3c4e, #2c3e50);
+        color: #b3e0f2;
+        border-color: #2c3e50;
     }
     
-    /* Sidebar */
-    .css-1d391kg {
-        background: white;
-        border-right: 1px solid var(--border-color);
+    .dark-mode .warning-box {
+        background: linear-gradient(135deg, #5d4037, #795548);
+        color: #ffccbc;
+        border-color: #795548;
     }
     
-    /* Progress Bar */
-    .stProgress > div > div {
-        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-    }
-    
-    /* Metrics */
+    /* Metric Cards */
     .metric-card {
-        background: white;
+        background-color: var(--card-bg);
         padding: 20px;
         border-radius: var(--radius);
         text-align: center;
         box-shadow: var(--shadow-light);
         border-top: 4px solid var(--primary-color);
+        color: var(--text-color);
     }
     
     /* Badges */
@@ -319,19 +331,30 @@ st.markdown("""
     .stChatInput {
         border: 2px solid var(--border-color) !important;
         border-radius: 10px !important;
+        background-color: var(--card-bg) !important;
+        color: var(--text-color) !important;
     }
     
-    .stChatInput:focus {
-        border-color: var(--primary-color) !important;
-        box-shadow: 0 0 0 2px rgba(26, 188, 156, 0.2) !important;
+    .stChatInput input {
+        background-color: var(--card-bg) !important;
+        color: var(--text-color) !important;
     }
     
     /* Expander */
     .streamlit-expanderHeader {
-        background: rgba(26, 188, 156, 0.1) !important;
+        background-color: var(--card-bg) !important;
+        border: 1px solid var(--border-color) !important;
         border-radius: 8px !important;
         font-weight: 600 !important;
-        color: var(--dark-color) !important;
+        color: var(--text-color) !important;
+    }
+    
+    .streamlit-expanderContent {
+        background-color: var(--card-bg) !important;
+        color: var(--text-color) !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: 8px !important;
+        margin-top: 10px !important;
     }
     
     /* Divider */
@@ -339,17 +362,6 @@ st.markdown("""
         height: 2px;
         background: linear-gradient(to right, transparent, var(--primary-color), transparent);
         margin: 30px 0;
-    }
-    
-    /* Pulse Animation */
-    @keyframes pulse {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.05); }
-        100% { transform: scale(1); }
-    }
-    
-    .pulse {
-        animation: pulse 2s infinite;
     }
     
     /* Feature Icons */
@@ -366,28 +378,72 @@ st.markdown("""
         font-size: 24px;
     }
     
-    /* Dark Mode Variables */
-    .dark-mode {
-        --dark-color: #ffffff;
-        --light-color: #121212;
-        --border-color: #333333;
-        --shadow-light: 0 5px 15px rgba(0, 0, 0, 0.2);
-        --shadow-medium: 0 10px 25px rgba(0, 0, 0, 0.3);
+    /* Pulse Animation */
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
     }
     
-    .dark-mode .card,
-    .dark-mode .file-card,
-    .dark-mode .assistant-msg,
-    .dark-mode .metric-card {
-        background: #1e1e1e;
+    .pulse {
+        animation: pulse 2s infinite;
+    }
+    
+    /* Sidebar */
+    section[data-testid="stSidebar"] {
+        background-color: var(--bg-color) !important;
+    }
+    
+    section[data-testid="stSidebar"] .stButton > button {
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
         color: white;
     }
     
-    .dark-mode .main-header {
-        background: linear-gradient(135deg, #16a085, #2980b9);
+    /* Radio buttons, checkboxes, etc. */
+    .stCheckbox label, .stRadio label, .stSelectbox label {
+        color: var(--text-color) !important;
     }
-</style>
-""", unsafe_allow_html=True)
+    
+    /* Slider */
+    .stSlider [data-baseweb="slider"] {
+        color: var(--primary-color) !important;
+    }
+    
+    /* Selectbox */
+    [data-baseweb="select"] {
+        background-color: var(--card-bg) !important;
+        color: var(--text-color) !important;
+        border-color: var(--border-color) !important;
+    }
+    
+    /* Markdown text colors */
+    .stMarkdown, .stAlert, .stSuccess, .stWarning, .stError, .stInfo {
+        color: var(--text-color) !important;
+    }
+    
+    /* Custom dark mode for Streamlit components */
+    .dark-mode div[data-testid="stMetricValue"] {
+        color: var(--text-color) !important;
+    }
+    
+    .dark-mode div[data-testid="stMetricLabel"] {
+        color: var(--text-light) !important;
+    }
+    
+    /* Fix for streamlit expander arrow in dark mode */
+    .dark-mode .streamlit-expanderHeader svg {
+        fill: var(--text-color) !important;
+    }
+    
+    </style>
+    """
+
+# Apply CSS
+st.markdown(get_css(), unsafe_allow_html=True)
+
+# Add dark mode class to body if needed
+if st.session_state.dark_mode:
+    st.markdown('<div class="dark-mode">', unsafe_allow_html=True)
 
 # Initialize RAG System
 def initialize_system():
@@ -608,13 +664,13 @@ ANSWER:"""
             'context_found': False
         }
 
-# Dark mode toggle
+# Toggle dark mode
 def toggle_dark_mode():
     st.session_state.dark_mode = not st.session_state.dark_mode
 
 # Main App
 def main():
-    # Apply dark mode if enabled
+    # Apply dark mode wrapper
     if st.session_state.dark_mode:
         st.markdown('<div class="dark-mode">', unsafe_allow_html=True)
     
@@ -628,9 +684,6 @@ def main():
     
     # Sidebar
     with st.sidebar:
-        st.markdown('<div class="card">', unsafe_allow_html=True)
-        
-        # Logo/Header
         st.markdown("""
         <div style="text-align: center; margin-bottom: 30px;">
             <h2 style="color: #1abc9c; margin-bottom: 5px;">CodeToLive</h2>
@@ -641,7 +694,7 @@ def main():
         # Dark Mode Toggle
         col1, col2 = st.columns([1, 1])
         with col1:
-            dark_mode_label = "🌙 Dark" if not st.session_state.dark_mode else "☀️ Light"
+            dark_mode_label = "🌙 Dark Mode" if not st.session_state.dark_mode else "☀️ Light Mode"
             if st.button(dark_mode_label, use_container_width=True):
                 toggle_dark_mode()
                 st.rerun()
@@ -669,15 +722,15 @@ def main():
                 doc_count = st.session_state.vectorstore.count()
                 st.markdown(f"""
                 <div class="metric-card">
-                    <h3>{doc_count}</h3>
-                    <p>Documents</p>
+                    <h3 style="margin: 0; color: var(--text-color);">{doc_count}</h3>
+                    <p style="margin: 5px 0 0 0; color: var(--text-light);">Documents</p>
                 </div>
                 """, unsafe_allow_html=True)
             except:
                 st.markdown("""
                 <div class="metric-card">
-                    <h3>0</h3>
-                    <p>Documents</p>
+                    <h3 style="margin: 0; color: var(--text-color);">0</h3>
+                    <p style="margin: 5px 0 0 0; color: var(--text-light);">Documents</p>
                 </div>
                 """, unsafe_allow_html=True)
             
@@ -705,32 +758,33 @@ def main():
         
         # Quick Actions
         st.markdown("### ⚡ Quick Actions")
-        if st.button("📋 Summarize All", use_container_width=True):
-            st.session_state.chat_history.append({
-                "role": "user", 
-                "content": "Provide a comprehensive summary of all uploaded documents"
-            })
-            st.rerun()
+        quick_actions = st.container()
         
-        if st.button("🔍 Key Topics", use_container_width=True):
-            st.session_state.chat_history.append({
-                "role": "user", 
-                "content": "What are the main topics covered in these documents?"
-            })
-            st.rerun()
-        
-        if st.button("💡 Ask Sample", use_container_width=True):
-            st.session_state.chat_history.append({
-                "role": "user", 
-                "content": "What can you tell me about these documents?"
-            })
-            st.rerun()
-        
-        st.markdown('</div>', unsafe_allow_html=True)  # Close card
+        with quick_actions:
+            if st.button("📋 Summarize All", use_container_width=True):
+                st.session_state.chat_history.append({
+                    "role": "user", 
+                    "content": "Provide a comprehensive summary of all uploaded documents"
+                })
+                st.rerun()
+            
+            if st.button("🔍 Key Topics", use_container_width=True):
+                st.session_state.chat_history.append({
+                    "role": "user", 
+                    "content": "What are the main topics covered in these documents?"
+                })
+                st.rerun()
+            
+            if st.button("💡 Ask Sample", use_container_width=True):
+                st.session_state.chat_history.append({
+                    "role": "user", 
+                    "content": "What can you tell me about these documents?"
+                })
+                st.rerun()
         
         # Footer
         st.markdown("""
-        <div style="text-align: center; margin-top: 30px; color: #666;">
+        <div style="text-align: center; margin-top: 30px; color: var(--text-light);">
             <p>Powered by CodeToLive</p>
             <p style="font-size: 0.8rem;">RAG Technology</p>
         </div>
@@ -751,7 +805,7 @@ def main():
             </div>
             <h3>Drag & Drop PDF Files</h3>
             <p>or click to browse your files</p>
-            <p style="font-size: 0.9rem; color: #666; margin-top: 10px;">
+            <p style="font-size: 0.9rem; color: var(--text-light); margin-top: 10px;">
                 Limit 200MB per file • PDF only
             </p>
         </div>
@@ -775,7 +829,7 @@ def main():
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div>
                             <strong>{uploaded_file.name}</strong><br>
-                            <small style="color: #666;">Size: {file_size_mb:.2f} MB</small>
+                            <small style="color: var(--text-light);">Size: {file_size_mb:.2f} MB</small>
                         </div>
                         <span class="badge">PDF</span>
                     </div>
@@ -796,9 +850,9 @@ def main():
                             # Show processing details
                             for file_info in result.get("files", []):
                                 st.markdown(f"""
-                                <div style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin: 5px 0;">
+                                <div style="background: var(--light-color); padding: 10px; border-radius: 5px; margin: 5px 0;">
                                     ✅ <strong>{file_info['name']}</strong><br>
-                                    <small>Pages: {file_info['pages']} • Chunks: {file_info['chunks']}</small>
+                                    <small style="color: var(--text-light);">Pages: {file_info['pages']} • Chunks: {file_info['chunks']}</small>
                                 </div>
                                 """, unsafe_allow_html=True)
                             
@@ -842,12 +896,12 @@ def main():
                 # Display chat history
                 if not st.session_state.chat_history:
                     st.markdown("""
-                    <div style="text-align: center; padding: 40px 20px; color: #666;">
+                    <div style="text-align: center; padding: 40px 20px;">
                         <div class="feature-icon" style="margin: 0 auto 20px;">
                             <i class="fas fa-robot"></i>
                         </div>
-                        <h3>Hello! I'm your Document Assistant</h3>
-                        <p>Upload a PDF document and ask me anything about its content.</p>
+                        <h3 style="color: var(--text-color);">Hello! I'm your Document Assistant</h3>
+                        <p style="color: var(--text-light);">Upload a PDF document and ask me anything about its content.</p>
                         <div style="margin-top: 20px;">
                             <span class="badge">Summarize</span>
                             <span class="badge">Find Information</span>
@@ -873,12 +927,12 @@ def main():
                                         
                                         # Create source card
                                         st.markdown(f"""
-                                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 10px 0;">
+                                        <div style="background: var(--light-color); padding: 15px; border-radius: 8px; margin: 10px 0;">
                                             <div style="display: flex; justify-content: space-between; align-items: center;">
-                                                <strong>{source_name}</strong>
+                                                <strong style="color: var(--text-color);">{source_name}</strong>
                                                 <span class="badge">{score:.1%} relevant</span>
                                             </div>
-                                            <p style="margin: 10px 0 0 0; font-style: italic; color: #555;">
+                                            <p style="margin: 10px 0 0 0; font-style: italic; color: var(--text-light);">
                                                 "{source['content']}"
                                             </p>
                                         </div>
@@ -960,8 +1014,8 @@ def main():
             <div class="feature-icon">
                 <i class="fas fa-file-pdf"></i>
             </div>
-            <h4>PDF Support</h4>
-            <p>Upload and analyze any PDF document with high accuracy text extraction.</p>
+            <h4 style="color: var(--text-color);">PDF Support</h4>
+            <p style="color: var(--text-light);">Upload and analyze any PDF document with high accuracy text extraction.</p>
         </div>
         """, unsafe_allow_html=True)
     
@@ -971,8 +1025,8 @@ def main():
             <div class="feature-icon">
                 <i class="fas fa-brain"></i>
             </div>
-            <h4>AI-Powered</h4>
-            <p>Advanced RAG system with semantic search and intelligent question answering.</p>
+            <h4 style="color: var(--text-color);">AI-Powered</h4>
+            <p style="color: var(--text-light);">Advanced RAG system with semantic search and intelligent question answering.</p>
         </div>
         """, unsafe_allow_html=True)
     
@@ -982,8 +1036,8 @@ def main():
             <div class="feature-icon">
                 <i class="fas fa-shield-alt"></i>
             </div>
-            <h4>Secure & Private</h4>
-            <p>Your documents are processed locally. No data is shared with third parties.</p>
+            <h4 style="color: var(--text-color);">Secure & Private</h4>
+            <p style="color: var(--text-light);">Your documents are processed locally. No data is shared with third parties.</p>
         </div>
         """, unsafe_allow_html=True)
     
@@ -994,13 +1048,13 @@ def main():
     
     with footer_col2:
         st.markdown("""
-        <div style="text-align: center; color: #666; padding: 20px;">
+        <div style="text-align: center; color: var(--text-light); padding: 20px;">
             <p style="font-size: 0.9rem;">Made with ❤️ by</p>
-            <h4 style="color: #1abc9c; margin: 0;">CodeToLive</h4>
+            <h3 style="color: #1abc9c; margin: 0;">CodeToLive</h3>
         </div>
         """, unsafe_allow_html=True)
     
-    # Close dark mode div if enabled
+    # Close dark mode wrapper if enabled
     if st.session_state.dark_mode:
         st.markdown('</div>', unsafe_allow_html=True)
 
