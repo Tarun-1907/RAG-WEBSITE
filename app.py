@@ -1,4 +1,4 @@
-# app.py - Fixed Dark Mode with CodeToLive Styling
+# app.py - Enhanced Dark Mode with CodeToLive Styling
 import streamlit as st
 import os
 import sys
@@ -54,7 +54,9 @@ if 'uploaded_files' not in st.session_state:
 if 'processing_status' not in st.session_state:
     st.session_state.processing_status = ""
 if 'dark_mode' not in st.session_state:
-    st.session_state.dark_mode = False
+    st.session_state.dark_mode = True  # Default to dark mode
+if 'show_settings' not in st.session_state:
+    st.session_state.show_settings = False
 
 # Page configuration
 st.set_page_config(
@@ -64,21 +66,15 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Define CSS for both light and dark modes
-def get_css():
-    return """
+# Define CSS for both light and dark modes with better Streamlit component support
+def get_css(dark_mode):
+    theme = "dark-mode" if dark_mode else ""
+    return f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
     
-    /* Common Styles */
-    .stApp {
-        max-width: 1400px;
-        margin: 0 auto;
-        font-family: 'Poppins', sans-serif;
-    }
-    
-    /* Light Mode Variables */
-    :root {
+    /* Theme Variables */
+    :root {{
         --primary-color: #1abc9c;
         --primary-dark: #16a085;
         --secondary-color: #3498db;
@@ -93,57 +89,74 @@ def get_css():
         --shadow-light: 0 5px 15px rgba(0, 0, 0, 0.05);
         --shadow-medium: 0 10px 25px rgba(0, 0, 0, 0.1);
         --radius: 10px;
-    }
+    }}
     
-    /* Dark Mode Variables */
-    .dark-mode {
+    .dark-mode {{
         --primary-color: #1abc9c;
         --primary-dark: #16a085;
         --secondary-color: #3498db;
         --accent-color: #e74c3c;
         --dark-color: #ffffff;
-        --light-color: #121212;
+        --light-color: #1a1a1a;
         --bg-color: #121212;
         --card-bg: #1e1e1e;
-        --border-color: #333333;
+        --border-color: #2d2d2d;
         --text-color: #ffffff;
-        --text-light: #cccccc;
-        --shadow-light: 0 5px 15px rgba(0, 0, 0, 0.2);
-        --shadow-medium: 0 10px 25px rgba(0, 0, 0, 0.3);
-    }
+        --text-light: #a0a0a0;
+        --shadow-light: 0 5px 15px rgba(0, 0, 0, 0.3);
+        --shadow-medium: 0 10px 25px rgba(0, 0, 0, 0.4);
+    }}
     
-    /* Apply theme variables */
-    .stApp {
-        background-color: var(--bg-color);
-        color: var(--text-color);
-    }
+    /* Apply theme to body */
+    body {{
+        background-color: var(--bg-color) !important;
+        color: var(--text-color) !important;
+        transition: all 0.3s ease;
+    }}
     
-    /* Header Styling */
-    .main-header {
+    /* Main Container */
+    .stApp {{
+        max-width: 1400px;
+        margin: 0 auto;
+        font-family: 'Poppins', sans-serif;
+        background-color: var(--bg-color) !important;
+        color: var(--text-color) !important;
+    }}
+    
+    /* Fix for all text elements */
+    .stMarkdown, .stText, .stAlert, .stSuccess, .stWarning, .stError, .stInfo,
+    h1, h2, h3, h4, h5, h6, p, span, div, label {{
+        color: var(--text-color) !important;
+    }}
+    
+    /* Header */
+    .main-header {{
         background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-        color: white;
-        padding: 20px;
+        color: white !important;
+        padding: 25px 30px;
         border-radius: var(--radius);
         margin-bottom: 30px;
         box-shadow: var(--shadow-medium);
         text-align: center;
-    }
+    }}
     
-    .main-header h1 {
+    .main-header h1 {{
         font-size: 2.5rem;
         font-weight: 700;
         margin-bottom: 10px;
-    }
+        color: white !important;
+    }}
     
-    .main-header p {
+    .main-header p {{
         font-size: 1.1rem;
-        opacity: 0.9;
+        opacity: 0.95;
         max-width: 800px;
         margin: 0 auto;
-    }
+        color: rgba(255, 255, 255, 0.9) !important;
+    }}
     
     /* Card Styling */
-    .card {
+    .card {{
         background-color: var(--card-bg);
         border-radius: var(--radius);
         padding: 25px;
@@ -151,53 +164,44 @@ def get_css():
         border: 1px solid var(--border-color);
         margin-bottom: 20px;
         transition: all 0.3s ease;
-        color: var(--text-color);
-    }
+    }}
     
-    .card:hover {
+    .card:hover {{
         transform: translateY(-5px);
         box-shadow: var(--shadow-medium);
-    }
+    }}
     
-    .card-header {
+    .card-header {{
         background: transparent !important;
         border-bottom: 2px solid var(--primary-color);
         padding-bottom: 15px;
         margin-bottom: 20px;
-        color: var(--text-color);
         font-weight: 600;
         font-size: 1.3rem;
-    }
+    }}
     
     /* Upload Area */
-    .upload-area {
+    .upload-area {{
         border: 3px dashed var(--primary-color);
         border-radius: var(--radius);
         padding: 50px 20px;
         text-align: center;
-        background: rgba(26, 188, 156, 0.05);
+        background: { 'rgba(26, 188, 156, 0.05)' if not dark_mode else 'rgba(26, 188, 156, 0.1)' };
         margin: 20px 0;
         transition: all 0.3s ease;
         cursor: pointer;
-        color: var(--text-color);
-    }
+    }}
     
-    .upload-area:hover {
-        background: rgba(26, 188, 156, 0.1);
+    .upload-area:hover {{
+        background: { 'rgba(26, 188, 156, 0.1)' if not dark_mode else 'rgba(26, 188, 156, 0.15)' };
         border-color: var(--primary-dark);
         transform: translateY(-2px);
-    }
-    
-    .upload-icon {
-        font-size: 50px;
-        color: var(--primary-color);
-        margin-bottom: 20px;
-    }
+    }}
     
     /* Chat Messages */
-    .user-msg {
+    .user-msg {{
         background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-        color: white;
+        color: white !important;
         padding: 15px 20px;
         border-radius: 18px 18px 4px 18px;
         margin: 12px 0;
@@ -205,11 +209,10 @@ def get_css():
         margin-left: auto;
         box-shadow: var(--shadow-light);
         border: none;
-    }
+    }}
     
-    .assistant-msg {
+    .assistant-msg {{
         background-color: var(--card-bg);
-        color: var(--text-color);
         padding: 15px 20px;
         border-radius: 18px 18px 18px 4px;
         margin: 12px 0;
@@ -217,29 +220,194 @@ def get_css():
         margin-right: auto;
         border: 1px solid var(--border-color);
         box-shadow: var(--shadow-light);
-    }
+    }}
     
-    /* Buttons - Override Streamlit's default */
-    .stButton > button {
+    /* Streamlit Component Overrides */
+    /* Buttons */
+    .stButton > button {{
         background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-        color: white;
-        border: none;
+        color: white !important;
+        border: none !important;
         padding: 10px 25px;
         border-radius: 8px;
         font-weight: 500;
         transition: all 0.3s ease;
         font-family: 'Poppins', sans-serif;
-    }
+    }}
     
-    .stButton > button:hover {
+    .stButton > button:hover {{
         transform: translateY(-2px);
         box-shadow: 0 5px 15px rgba(26, 188, 156, 0.3);
-        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-        color: white;
-    }
+    }}
     
-    /* File Cards */
-    .file-card {
+    /* Secondary buttons */
+    .stButton > button[kind="secondary"] {{
+        background: var(--card-bg) !important;
+        color: var(--text-color) !important;
+        border: 1px solid var(--border-color) !important;
+    }}
+    
+    .stButton > button[kind="secondary"]:hover {{
+        background: var(--light-color) !important;
+    }}
+    
+    /* Input fields */
+    .stTextInput > div > div > input,
+    .stTextArea > div > div > textarea {{
+        background-color: var(--card-bg) !important;
+        color: var(--text-color) !important;
+        border: 1px solid var(--border-color) !important;
+    }}
+    
+    .stTextInput > div > div > input:focus,
+    .stTextArea > div > div > textarea:focus {{
+        border-color: var(--primary-color) !important;
+    }}
+    
+    /* Select boxes */
+    [data-baseweb="select"] > div {{
+        background-color: var(--card-bg) !important;
+        border: 1px solid var(--border-color) !important;
+    }}
+    
+    [data-baseweb="select"] input {{
+        color: var(--text-color) !important;
+    }}
+    
+    /* Sliders */
+    .stSlider > div > div {{
+        color: var(--primary-color) !important;
+    }}
+    
+    .stSlider > div > div > div {{
+        background-color: var(--primary-color) !important;
+    }}
+    
+    /* Checkboxes and Radio buttons */
+    .stCheckbox, .stRadio {{
+        color: var(--text-color) !important;
+    }}
+    
+    .stCheckbox > label, .stRadio > label {{
+        color: var(--text-color) !important;
+    }}
+    
+    /* Sidebar */
+    section[data-testid="stSidebar"] {{
+        background-color: var(--bg-color) !important;
+    }}
+    
+    section[data-testid="stSidebar"] .stButton > button {{
+        width: 100%;
+    }}
+    
+    /* Expanders */
+    .streamlit-expanderHeader {{
+        background-color: var(--card-bg) !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: 8px !important;
+        color: var(--text-color) !important;
+    }}
+    
+    .streamlit-expanderHeader:hover {{
+        background-color: var(--light-color) !important;
+    }}
+    
+    .streamlit-expanderContent {{
+        background-color: var(--card-bg) !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: 0 0 8px 8px !important;
+        margin-top: 0 !important;
+    }}
+    
+    /* Chat input */
+    .stChatInput {{
+        border: 1px solid var(--border-color) !important;
+        border-radius: 10px !important;
+        background-color: var(--card-bg) !important;
+    }}
+    
+    .stChatInput input {{
+        background-color: var(--card-bg) !important;
+        color: var(--text-color) !important;
+    }}
+    
+    /* File uploader */
+    .stFileUploader > div {{
+        border: 2px dashed var(--border-color) !important;
+        background-color: var(--card-bg) !important;
+        border-radius: var(--radius) !important;
+    }}
+    
+    .stFileUploader > div:hover {{
+        border-color: var(--primary-color) !important;
+    }}
+    
+    /* Status boxes */
+    .success-box {{
+        background: { 'linear-gradient(135deg, #d4edda, #c3e6cb)' if not dark_mode else 'linear-gradient(135deg, #1e4620, #2d5a2f)' } !important;
+        color: { '#155724' if not dark_mode else '#c8e6c9' } !important;
+        padding: 20px;
+        border-radius: var(--radius);
+        border: 2px solid { '#c3e6cb' if not dark_mode else '#2d5a2f' } !important;
+        margin: 15px 0;
+        font-weight: 500;
+    }}
+    
+    .info-box {{
+        background: { 'linear-gradient(135deg, #d1ecf1, #bee5eb)' if not dark_mode else 'linear-gradient(135deg, #1a3c4e, #2c3e50)' } !important;
+        color: { '#0c5460' if not dark_mode else '#b3e0f2' } !important;
+        padding: 20px;
+        border-radius: var(--radius);
+        border: 2px solid { '#bee5eb' if not dark_mode else '#2c3e50' } !important;
+        margin: 15px 0;
+        font-weight: 500;
+    }}
+    
+    .warning-box {{
+        background: { 'linear-gradient(135deg, #fff3cd, #ffeaa7)' if not dark_mode else 'linear-gradient(135deg, #5d4037, #795548)' } !important;
+        color: { '#856404' if not dark_mode else '#ffccbc' } !important;
+        padding: 20px;
+        border-radius: var(--radius);
+        border: 2px solid { '#ffeaa7' if not dark_mode else '#795548' } !important;
+        margin: 15px 0;
+        font-weight: 500;
+    }}
+    
+    /* Metric cards */
+    .metric-card {{
+        background-color: var(--card-bg);
+        padding: 20px;
+        border-radius: var(--radius);
+        text-align: center;
+        box-shadow: var(--shadow-light);
+        border-top: 4px solid var(--primary-color);
+    }}
+    
+    .metric-card h3 {{
+        color: var(--text-color) !important;
+        margin: 0;
+    }}
+    
+    .metric-card p {{
+        color: var(--text-light) !important;
+        margin: 5px 0 0 0;
+    }}
+    
+    /* Badges */
+    .badge {{
+        background: var(--primary-color);
+        color: white !important;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        display: inline-block;
+        margin: 2px;
+    }}
+    
+    /* File cards */
+    .file-card {{
         background-color: var(--card-bg);
         padding: 20px;
         border-radius: var(--radius);
@@ -247,125 +415,21 @@ def get_css():
         border-left: 5px solid var(--primary-color);
         box-shadow: var(--shadow-light);
         transition: all 0.3s ease;
-        color: var(--text-color);
-    }
+    }}
     
-    .file-card:hover {
+    .file-card:hover {{
         transform: translateX(5px);
-    }
-    
-    /* Status Boxes */
-    .success-box {
-        background: linear-gradient(135deg, #d4edda, #c3e6cb);
-        color: #155724;
-        padding: 20px;
-        border-radius: var(--radius);
-        border: 2px solid #c3e6cb;
-        margin: 15px 0;
-        font-weight: 500;
-    }
-    
-    .info-box {
-        background: linear-gradient(135deg, #d1ecf1, #bee5eb);
-        color: #0c5460;
-        padding: 20px;
-        border-radius: var(--radius);
-        border: 2px solid #bee5eb;
-        margin: 15px 0;
-        font-weight: 500;
-    }
-    
-    .warning-box {
-        background: linear-gradient(135deg, #fff3cd, #ffeaa7);
-        color: #856404;
-        padding: 20px;
-        border-radius: var(--radius);
-        border: 2px solid #ffeaa7;
-        margin: 15px 0;
-        font-weight: 500;
-    }
-    
-    /* Dark Mode specific status boxes */
-    .dark-mode .success-box {
-        background: linear-gradient(135deg, #1e4620, #2d5a2f);
-        color: #c8e6c9;
-        border-color: #2d5a2f;
-    }
-    
-    .dark-mode .info-box {
-        background: linear-gradient(135deg, #1a3c4e, #2c3e50);
-        color: #b3e0f2;
-        border-color: #2c3e50;
-    }
-    
-    .dark-mode .warning-box {
-        background: linear-gradient(135deg, #5d4037, #795548);
-        color: #ffccbc;
-        border-color: #795548;
-    }
-    
-    /* Metric Cards */
-    .metric-card {
-        background-color: var(--card-bg);
-        padding: 20px;
-        border-radius: var(--radius);
-        text-align: center;
-        box-shadow: var(--shadow-light);
-        border-top: 4px solid var(--primary-color);
-        color: var(--text-color);
-    }
-    
-    /* Badges */
-    .badge {
-        background: var(--primary-color);
-        color: white;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 0.8rem;
-        font-weight: 500;
-        display: inline-block;
-        margin: 2px;
-    }
-    
-    /* Chat Input */
-    .stChatInput {
-        border: 2px solid var(--border-color) !important;
-        border-radius: 10px !important;
-        background-color: var(--card-bg) !important;
-        color: var(--text-color) !important;
-    }
-    
-    .stChatInput input {
-        background-color: var(--card-bg) !important;
-        color: var(--text-color) !important;
-    }
-    
-    /* Expander */
-    .streamlit-expanderHeader {
-        background-color: var(--card-bg) !important;
-        border: 1px solid var(--border-color) !important;
-        border-radius: 8px !important;
-        font-weight: 600 !important;
-        color: var(--text-color) !important;
-    }
-    
-    .streamlit-expanderContent {
-        background-color: var(--card-bg) !important;
-        color: var(--text-color) !important;
-        border: 1px solid var(--border-color) !important;
-        border-radius: 8px !important;
-        margin-top: 10px !important;
-    }
+    }}
     
     /* Divider */
-    .divider {
+    .divider {{
         height: 2px;
         background: linear-gradient(to right, transparent, var(--primary-color), transparent);
         margin: 30px 0;
-    }
+    }}
     
-    /* Feature Icons */
-    .feature-icon {
+    /* Feature icons */
+    .feature-icon {{
         width: 60px;
         height: 60px;
         background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
@@ -374,74 +438,42 @@ def get_css():
         align-items: center;
         justify-content: center;
         margin: 0 auto 20px;
-        color: white;
+        color: white !important;
         font-size: 24px;
-    }
+    }}
     
-    /* Pulse Animation */
-    @keyframes pulse {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.05); }
-        100% { transform: scale(1); }
-    }
+    /* Toggle switch for dark mode */
+    .toggle-switch {{
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px;
+        background: var(--card-bg);
+        border-radius: var(--radius);
+        border: 1px solid var(--border-color);
+        margin-bottom: 20px;
+    }}
     
-    .pulse {
-        animation: pulse 2s infinite;
-    }
-    
-    /* Sidebar */
-    section[data-testid="stSidebar"] {
-        background-color: var(--bg-color) !important;
-    }
-    
-    section[data-testid="stSidebar"] .stButton > button {
-        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-        color: white;
-    }
-    
-    /* Radio buttons, checkboxes, etc. */
-    .stCheckbox label, .stRadio label, .stSelectbox label {
+    /* Ensure all text in Streamlit widgets is properly colored */
+    div[data-testid="stMetricValue"], 
+    div[data-testid="stMetricLabel"],
+    .st-bb, .st-bc, .st-bd, .st-be, .st-bf, .st-bg, .st-bh, .st-bi, .st-bj, .st-bk, .st-bl, .st-bm, .st-bn, .st-bo, .st-bp, .st-bq, .st-br, .st-bs, .st-bt, .st-bu, .st-bv, .st-bw, .st-bx, .st-by, .st-bz {{
         color: var(--text-color) !important;
-    }
+    }}
     
-    /* Slider */
-    .stSlider [data-baseweb="slider"] {
-        color: var(--primary-color) !important;
-    }
-    
-    /* Selectbox */
-    [data-baseweb="select"] {
+    /* Fix for streamlit's default alerts */
+    .stAlert {{
         background-color: var(--card-bg) !important;
-        color: var(--text-color) !important;
-        border-color: var(--border-color) !important;
-    }
-    
-    /* Markdown text colors */
-    .stMarkdown, .stAlert, .stSuccess, .stWarning, .stError, .stInfo {
-        color: var(--text-color) !important;
-    }
-    
-    /* Custom dark mode for Streamlit components */
-    .dark-mode div[data-testid="stMetricValue"] {
-        color: var(--text-color) !important;
-    }
-    
-    .dark-mode div[data-testid="stMetricLabel"] {
-        color: var(--text-light) !important;
-    }
-    
-    /* Fix for streamlit expander arrow in dark mode */
-    .dark-mode .streamlit-expanderHeader svg {
-        fill: var(--text-color) !important;
-    }
+        border: 1px solid var(--border-color) !important;
+    }}
     
     </style>
     """
 
-# Apply CSS
-st.markdown(get_css(), unsafe_allow_html=True)
+# Apply CSS based on current mode
+st.markdown(get_css(st.session_state.dark_mode), unsafe_allow_html=True)
 
-# Add dark mode class to body if needed
+# Add theme class to body for CSS variables
 if st.session_state.dark_mode:
     st.markdown('<div class="dark-mode">', unsafe_allow_html=True)
 
@@ -670,12 +702,11 @@ def toggle_dark_mode():
 
 # Main App
 def main():
-    # Apply dark mode wrapper
-    if st.session_state.dark_mode:
-        st.markdown('<div class="dark-mode">', unsafe_allow_html=True)
+    # Apply theme wrapper
+    theme_class = "dark-mode" if st.session_state.dark_mode else ""
     
     # Main Header
-    st.markdown("""
+    st.markdown(f"""
     <div class="main-header">
         <h1>📚 Document Q&A Assistant</h1>
         <p>Upload PDFs and ask questions about them in real-time!</p>
@@ -684,24 +715,27 @@ def main():
     
     # Sidebar
     with st.sidebar:
-        st.markdown("""
+        st.markdown(f"""
         <div style="text-align: center; margin-bottom: 30px;">
             <h2 style="color: #1abc9c; margin-bottom: 5px;">CodeToLive</h2>
-            <p style="color: #666; font-size: 0.9rem;">Document Analysis</p>
+            <p style="color: {'#a0a0a0' if st.session_state.dark_mode else '#666'}; font-size: 0.9rem;">
+                Document Analysis
+            </p>
         </div>
         """, unsafe_allow_html=True)
         
         # Dark Mode Toggle
+        st.markdown("### 🌓 Theme")
         col1, col2 = st.columns([1, 1])
         with col1:
-            dark_mode_label = "🌙 Dark Mode" if not st.session_state.dark_mode else "☀️ Light Mode"
-            if st.button(dark_mode_label, use_container_width=True):
+            dark_mode_label = "🌙 Dark" if st.session_state.dark_mode else "☀️ Light"
+            if st.button(dark_mode_label, use_container_width=True, type="primary" if st.session_state.dark_mode else "secondary"):
                 toggle_dark_mode()
                 st.rerun()
         
         with col2:
-            if st.button("⚙️ Settings", use_container_width=True):
-                st.session_state.show_settings = not st.session_state.get('show_settings', False)
+            if st.button("⚙️ Settings", use_container_width=True, type="secondary"):
+                st.session_state.show_settings = not st.session_state.show_settings
         
         st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
         
@@ -722,35 +756,40 @@ def main():
                 doc_count = st.session_state.vectorstore.count()
                 st.markdown(f"""
                 <div class="metric-card">
-                    <h3 style="margin: 0; color: var(--text-color);">{doc_count}</h3>
-                    <p style="margin: 5px 0 0 0; color: var(--text-light);">Documents</p>
+                    <h3>{doc_count}</h3>
+                    <p>Documents</p>
                 </div>
                 """, unsafe_allow_html=True)
             except:
-                st.markdown("""
+                st.markdown(f"""
                 <div class="metric-card">
-                    <h3 style="margin: 0; color: var(--text-color);">0</h3>
-                    <p style="margin: 5px 0 0 0; color: var(--text-light);">Documents</p>
+                    <h3>0</h3>
+                    <p>Documents</p>
                 </div>
                 """, unsafe_allow_html=True)
             
             st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
             
-            # Settings
-            st.markdown("### ⚙️ Settings")
-            top_k = st.slider("Reference chunks", 1, 10, 3, help="Number of document chunks to reference")
-            show_sources = st.checkbox("Show sources", value=True)
+            # Settings (only show if toggled)
+            if st.session_state.show_settings:
+                st.markdown("### ⚙️ Settings")
+                top_k = st.slider("Reference chunks", 1, 10, 3, help="Number of document chunks to reference")
+                show_sources = st.checkbox("Show sources", value=True)
+            else:
+                top_k = 3
+                show_sources = True
             
             # Clear buttons
+            st.markdown("### 🗑️ Data Management")
             col3, col4 = st.columns(2)
             with col3:
-                if st.button("🗑️ Clear DB", use_container_width=True, type="secondary"):
+                if st.button("Clear Database", use_container_width=True, type="secondary"):
                     if clear_vector_database():
                         st.success("Database cleared!")
                         st.rerun()
             
             with col4:
-                if st.button("💬 Clear Chat", use_container_width=True, type="secondary"):
+                if st.button("Clear Chat", use_container_width=True, type="secondary"):
                     st.session_state.chat_history = []
                     st.rerun()
         
@@ -758,33 +797,31 @@ def main():
         
         # Quick Actions
         st.markdown("### ⚡ Quick Actions")
-        quick_actions = st.container()
         
-        with quick_actions:
-            if st.button("📋 Summarize All", use_container_width=True):
-                st.session_state.chat_history.append({
-                    "role": "user", 
-                    "content": "Provide a comprehensive summary of all uploaded documents"
-                })
-                st.rerun()
-            
-            if st.button("🔍 Key Topics", use_container_width=True):
-                st.session_state.chat_history.append({
-                    "role": "user", 
-                    "content": "What are the main topics covered in these documents?"
-                })
-                st.rerun()
-            
-            if st.button("💡 Ask Sample", use_container_width=True):
-                st.session_state.chat_history.append({
-                    "role": "user", 
-                    "content": "What can you tell me about these documents?"
-                })
-                st.rerun()
+        if st.button("📋 Summarize All", use_container_width=True, type="secondary"):
+            st.session_state.chat_history.append({
+                "role": "user", 
+                "content": "Provide a comprehensive summary of all uploaded documents"
+            })
+            st.rerun()
+        
+        if st.button("🔍 Key Topics", use_container_width=True, type="secondary"):
+            st.session_state.chat_history.append({
+                "role": "user", 
+                "content": "What are the main topics covered in these documents?"
+            })
+            st.rerun()
+        
+        if st.button("💡 Ask Sample", use_container_width=True, type="secondary"):
+            st.session_state.chat_history.append({
+                "role": "user", 
+                "content": "What can you tell me about these documents?"
+            })
+            st.rerun()
         
         # Footer
-        st.markdown("""
-        <div style="text-align: center; margin-top: 30px; color: var(--text-light);">
+        st.markdown(f"""
+        <div style="text-align: center; margin-top: 30px; color: {'#a0a0a0' if st.session_state.dark_mode else '#666'};">
             <p>Powered by CodeToLive</p>
             <p style="font-size: 0.8rem;">RAG Technology</p>
         </div>
@@ -798,24 +835,23 @@ def main():
         st.markdown('<div class="card-header">📤 Upload Documents</div>', unsafe_allow_html=True)
         
         # Upload area
-        st.markdown("""
+        st.markdown(f"""
         <div class="upload-area">
-            <div class="upload-icon">
-                <i class="fas fa-cloud-upload-alt"></i>
+            <div class="feature-icon" style="background: transparent; color: var(--primary-color); font-size: 40px;">
+                📤
             </div>
             <h3>Drag & Drop PDF Files</h3>
             <p>or click to browse your files</p>
-            <p style="font-size: 0.9rem; color: var(--text-light); margin-top: 10px;">
+            <p style="color: var(--text-light); margin-top: 10px;">
                 Limit 200MB per file • PDF only
             </p>
         </div>
         """, unsafe_allow_html=True)
         
         uploaded_files = st.file_uploader(
-            "",
+            "Upload PDF documents",
             type=['pdf'],
             accept_multiple_files=True,
-            key="file_uploader",
             label_visibility="collapsed"
         )
         
@@ -852,7 +888,9 @@ def main():
                                 st.markdown(f"""
                                 <div style="background: var(--light-color); padding: 10px; border-radius: 5px; margin: 5px 0;">
                                     ✅ <strong>{file_info['name']}</strong><br>
-                                    <small style="color: var(--text-light);">Pages: {file_info['pages']} • Chunks: {file_info['chunks']}</small>
+                                    <small style="color: var(--text-light);">
+                                        Pages: {file_info['pages']} • Chunks: {file_info['chunks']}
+                                    </small>
                                 </div>
                                 """, unsafe_allow_html=True)
                             
@@ -882,7 +920,7 @@ def main():
         st.markdown('<div class="card-header">💬 Ask Questions</div>', unsafe_allow_html=True)
         
         if not st.session_state.system_initialized:
-            st.markdown("""
+            st.markdown(f"""
             <div class="warning-box" style="text-align: center;">
                 <h4>👈 Please Initialize System</h4>
                 <p>Use the button in the sidebar to initialize the system first</p>
@@ -890,18 +928,20 @@ def main():
             """, unsafe_allow_html=True)
         else:
             # Chat container
-            chat_container = st.container()
+            chat_container = st.container(height=400)
             
             with chat_container:
                 # Display chat history
                 if not st.session_state.chat_history:
-                    st.markdown("""
+                    st.markdown(f"""
                     <div style="text-align: center; padding: 40px 20px;">
                         <div class="feature-icon" style="margin: 0 auto 20px;">
-                            <i class="fas fa-robot"></i>
+                            🤖
                         </div>
-                        <h3 style="color: var(--text-color);">Hello! I'm your Document Assistant</h3>
-                        <p style="color: var(--text-light);">Upload a PDF document and ask me anything about its content.</p>
+                        <h3>Hello! I'm your Document Assistant</h3>
+                        <p style="color: var(--text-light);">
+                            Upload a PDF document and ask me anything about its content.
+                        </p>
                         <div style="margin-top: 20px;">
                             <span class="badge">Summarize</span>
                             <span class="badge">Find Information</span>
@@ -929,7 +969,7 @@ def main():
                                         st.markdown(f"""
                                         <div style="background: var(--light-color); padding: 15px; border-radius: 8px; margin: 10px 0;">
                                             <div style="display: flex; justify-content: space-between; align-items: center;">
-                                                <strong style="color: var(--text-color);">{source_name}</strong>
+                                                <strong>{source_name}</strong>
                                                 <span class="badge">{score:.1%} relevant</span>
                                             </div>
                                             <p style="margin: 10px 0 0 0; font-style: italic; color: var(--text-light);">
@@ -960,46 +1000,46 @@ def main():
                     
                     # Rerun to show new messages
                     st.rerun()
+        
+        st.markdown('</div>', unsafe_allow_html=True)  # Close card
+        
+        # Quick Questions
+        st.markdown('<div class="card" style="margin-top: 20px;">', unsafe_allow_html=True)
+        st.markdown('<div class="card-header">⚡ Quick Questions</div>', unsafe_allow_html=True)
+        
+        qcol1, qcol2 = st.columns(2)
+        
+        with qcol1:
+            if st.button("📋 Summarize", use_container_width=True):
+                st.session_state.chat_history.append({
+                    "role": "user", 
+                    "content": "Can you summarize the main points of all documents?"
+                })
+                st.rerun()
             
-            st.markdown('</div>', unsafe_allow_html=True)  # Close card
+            if st.button("🔑 Key Points", use_container_width=True):
+                st.session_state.chat_history.append({
+                    "role": "user", 
+                    "content": "What are the key points I should remember?"
+                })
+                st.rerun()
+        
+        with qcol2:
+            if st.button("📖 Main Topics", use_container_width=True):
+                st.session_state.chat_history.append({
+                    "role": "user", 
+                    "content": "List the main topics covered in these documents"
+                })
+                st.rerun()
             
-            # Quick Questions
-            st.markdown('<div class="card" style="margin-top: 20px;">', unsafe_allow_html=True)
-            st.markdown('<div class="card-header">⚡ Quick Questions</div>', unsafe_allow_html=True)
-            
-            qcol1, qcol2 = st.columns(2)
-            
-            with qcol1:
-                if st.button("📋 Summarize", use_container_width=True, key="quick1"):
-                    st.session_state.chat_history.append({
-                        "role": "user", 
-                        "content": "Can you summarize the main points of all documents?"
-                    })
-                    st.rerun()
-                
-                if st.button("🔑 Key Points", use_container_width=True, key="quick2"):
-                    st.session_state.chat_history.append({
-                        "role": "user", 
-                        "content": "What are the key points I should remember?"
-                    })
-                    st.rerun()
-            
-            with qcol2:
-                if st.button("📖 Main Topics", use_container_width=True, key="quick3"):
-                    st.session_state.chat_history.append({
-                        "role": "user", 
-                        "content": "List the main topics covered in these documents"
-                    })
-                    st.rerun()
-                
-                if st.button("❓ Ask Sample", use_container_width=True, key="quick4"):
-                    st.session_state.chat_history.append({
-                        "role": "user", 
-                        "content": "What is this document about?"
-                    })
-                    st.rerun()
-            
-            st.markdown('</div>', unsafe_allow_html=True)  # Close card
+            if st.button("❓ Ask Sample", use_container_width=True):
+                st.session_state.chat_history.append({
+                    "role": "user", 
+                    "content": "What is this document about?"
+                })
+                st.rerun()
+        
+        st.markdown('</div>', unsafe_allow_html=True)  # Close card
     
     # Features Grid
     st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
@@ -1012,10 +1052,12 @@ def main():
         st.markdown("""
         <div class="card" style="text-align: center;">
             <div class="feature-icon">
-                <i class="fas fa-file-pdf"></i>
+                📄
             </div>
-            <h4 style="color: var(--text-color);">PDF Support</h4>
-            <p style="color: var(--text-light);">Upload and analyze any PDF document with high accuracy text extraction.</p>
+            <h4>PDF Support</h4>
+            <p style="color: var(--text-light);">
+                Upload and analyze any PDF document with high accuracy text extraction.
+            </p>
         </div>
         """, unsafe_allow_html=True)
     
@@ -1023,10 +1065,12 @@ def main():
         st.markdown("""
         <div class="card" style="text-align: center;">
             <div class="feature-icon">
-                <i class="fas fa-brain"></i>
+                🧠
             </div>
-            <h4 style="color: var(--text-color);">AI-Powered</h4>
-            <p style="color: var(--text-light);">Advanced RAG system with semantic search and intelligent question answering.</p>
+            <h4>AI-Powered</h4>
+            <p style="color: var(--text-light);">
+                Advanced RAG system with semantic search and intelligent question answering.
+            </p>
         </div>
         """, unsafe_allow_html=True)
     
@@ -1034,10 +1078,12 @@ def main():
         st.markdown("""
         <div class="card" style="text-align: center;">
             <div class="feature-icon">
-                <i class="fas fa-shield-alt"></i>
+                🔒
             </div>
-            <h4 style="color: var(--text-color);">Secure & Private</h4>
-            <p style="color: var(--text-light);">Your documents are processed locally. No data is shared with third parties.</p>
+            <h4>Secure & Private</h4>
+            <p style="color: var(--text-light);">
+                Your documents are processed locally. No data is shared with third parties.
+            </p>
         </div>
         """, unsafe_allow_html=True)
     
@@ -1047,16 +1093,12 @@ def main():
     footer_col1, footer_col2, footer_col3 = st.columns([2, 1, 2])
     
     with footer_col2:
-        st.markdown("""
+        st.markdown(f"""
         <div style="text-align: center; color: var(--text-light); padding: 20px;">
             <p style="font-size: 0.9rem;">Made with ❤️ by</p>
             <h3 style="color: #1abc9c; margin: 0;">CodeToLive</h3>
         </div>
         """, unsafe_allow_html=True)
-    
-    # Close dark mode wrapper if enabled
-    if st.session_state.dark_mode:
-        st.markdown('</div>', unsafe_allow_html=True)
 
 # Run the app
 if __name__ == "__main__":
